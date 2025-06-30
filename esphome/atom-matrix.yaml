@@ -1,0 +1,66 @@
+substitutions:
+  name: atom-matrix
+  board: m5stack-atom
+  upper_name: Atom Matrix
+  matrixwidth: "5"
+  matrixheight: "5"
+  xscrollpadding: "4"
+
+esphome:
+  name: ${name}
+
+esp32:
+  board: ${board}
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  use_address: 192.168.99.72
+
+  ap:
+    ssid: "${upper_name} Fallback Hotspot"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO39
+      inverted: true
+    name: "${upper_name} Button"
+
+sensor:
+  - platform: wifi_signal
+    name: "${upper_name} WiFi Signal"
+    update_interval: 60s
+
+  - platform: uptime
+    name: "${upper_name} Uptime"
+
+switch:
+  - platform: restart
+    name: "${upper_name} Restart"
+
+light:
+  - platform: neopixelbus
+    name: DoorAlertM5
+    type: GRB
+    variant: WS2812x
+    pin: 27
+    num_leds: 25
+    id: led_matrix_light
+    restore_mode: ALWAYS_OFF
+
