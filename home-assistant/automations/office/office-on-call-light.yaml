@@ -1,0 +1,56 @@
+alias: Office Door Light
+description: "Automation controlling the 'on-call' light at the office door"
+triggers:
+  - trigger: state
+    entity_id:
+      - input_boolean.toggl_task_running
+    id: task-running
+    to: "on"
+  - trigger: state
+    entity_id:
+      - input_boolean.toggl_task_running
+    to: "off"
+    id: task-stopped
+conditions: []
+actions:
+  - if:
+      - condition: trigger
+        id:
+          - task-running
+    then:
+      - if:
+          - condition: state
+            entity_id: input_boolean.toggl_task_meeting
+            state: "on"
+        then:
+          - action: light.turn_on
+            metadata: {}
+            data:
+              rgb_color:
+                - 255
+                - 38
+                - 0
+              brightness_pct: 100
+            target:
+              entity_id: light.atom_matrix_dooralertm5
+            alias: Turn M5 Red
+        else:
+          - action: light.turn_on
+            metadata: {}
+            data:
+              rgb_color:
+                - 0
+                - 249
+                - 0
+              brightness_pct: 100
+            target:
+              entity_id: light.atom_matrix_dooralertm5
+            alias: Turn M5 Green
+        alias: Turn M5 On with a colour depending on if in a meeting or not
+    else:
+      - action: light.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.atom_matrix_dooralertm5
+mode: single
