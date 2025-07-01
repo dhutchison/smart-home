@@ -1,0 +1,60 @@
+alias: Toggl Webhook Handler
+description: "Automation for setting input helper state based on toggl webhook events. "
+triggers:
+  - trigger: webhook
+    allowed_methods:
+      - POST
+      - PUT
+    local_only: false
+    webhook_id: toggl-webhook-handler-<your unique id>
+actions:
+  - variables:
+      payload: "{{ trigger.json.payload }}"
+      description: "{{ payload.description | default('No Description') }}"
+      meeting: "{{ 'meeting' in payload.tags }}"
+      running: "{{ not payload.stop }}"
+      duration: >-
+        {{ ((as_timestamp(now()) - as_timestamp(payload.start)) if payload.start
+        else 0) / 60 | round(1) }}
+  - data:
+      entity_id: input_text.toggl_task_name
+      value: "{{ description }}"
+    action: input_text.set_value
+  - data:
+      entity_id: input_number.toggl_task_duration_min
+      value: "{{ duration }}"
+    action: input_number.set_value
+  - alias: If Running
+    if:
+      - condition: template
+        value_template: "{{ running }}"
+    then:
+      - action: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id:
+            - input_boolean.toggl_task_running
+    else:
+      - action: input_boolean.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id:
+            - input_boolean.toggl_task_running
+  - if:
+      - condition: template
+        value_template: "{{ meeting }}"
+    then:
+      - action: input_boolean.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.toggl_task_meeting
+    else:
+      - action: input_boolean.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: input_boolean.toggl_task_meeting
+    alias: If Meeting
